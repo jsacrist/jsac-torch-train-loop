@@ -1,0 +1,12 @@
+# IDE stuff
+.vscode/
+
+# Python artifacts
+__pycache__/
+build/
+dist/
+*.egg-info/
+**.pyc
+
+# Datasets
+**/.cached/
