@@ -10,37 +10,11 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.tensorboard import writer
 
 # Imports from this project
-# ...
+from . import helpers as h
 
 __all__ = [  # External-facing members exported by this file
     "train",
 ]
-
-
-def _fmt_loss(loss_val, sep="_", decimals=6):
-    loss_re_str = r"(\d)(?=(\d{3})+(?!\d))"
-    return re.sub(loss_re_str, rf"\1{sep}", f"{loss_val:.{decimals}f}")
-
-
-def _zero_out_dict(some_dict: dict):
-    some_dict = {k: 0.0 for k, _ in some_dict.items()}
-    return some_dict
-
-
-def _div_dict(some_dict: dict, denominator: float):
-    some_dict = {k: v / denominator for k, v in some_dict.items()}
-    return some_dict
-
-
-def _verbose_log(*, loss_train_avg, delta, idx_batch, idx_epoch, num_epochs, n_total_batches):
-    log_str = (
-        ""
-        + f"{delta}; "
-        + f"Epoch [{idx_epoch + 1}/{num_epochs}]; "
-        + f"Batch [{idx_batch + 1}/{n_total_batches}]; "
-        + f"Average Loss: {_fmt_loss(loss_train_avg)}; "
-    )
-    print(log_str)
 
 
 def train(
@@ -62,31 +36,18 @@ def train(
     verbose: bool = True,
 ):
     # Parse and validate parameters
-    #
+    progress = h.parse_progress(progress)
+    progress_level = h.parse_progress_level(progress_level)
 
-    # Parse progress parameter
-    if progress is True:
-        progress = "notebook"
-    if isinstance(progress, str):
-        _supported_progress = ["notebook", "cli"]
-        assert (
-            progress in _supported_progress
-        ), f"unsuported {progress}.  Provide one of {_supported_progress}"
+    #
     if progress == "notebook":
         from tqdm.notebook import tqdm
     else:  # "cli"
         from tqdm import tqdm
 
-    # Init loss dictionary
-    loss_values = {"train": 0.0}
-    if validation_loader is not None:
-        loss_values["validation"] = 0.0
-
-    # Init additional metrics dictionary
-    eval_values = dict()
-    if eval_metrics is not None:
-        assert tb_writer is not None, "'val_metrics' Requires 'tb_writer'"
-        eval_values = {metric_name: 0.0 for (metric_name, _) in eval_metrics.items()}
+    # Init dictionaries
+    loss_values = h.init_loss_value_dict(validation_loader)
+    eval_values = h.init_eval_values_dict(eval_metrics, tb_writer)
 
     # Initialize variables
     n_batches = len(data_loader)
@@ -102,8 +63,8 @@ def train(
     for idx_epoch in range(num_epochs):
         # Zero-out losses
         batch_loss = 0.0
-        loss_values = _zero_out_dict(loss_values)
-        eval_values = _zero_out_dict(eval_values)
+        loss_values = h.zero_out_dict(loss_values)
+        eval_values = h.zero_out_dict(eval_values)
 
         # Inner loop start (batches)
         bar_batch = (
@@ -177,7 +138,7 @@ def train(
 
                     # Compute running AVERAGE loss and AVERAGE metrics
                     loss_values["train"] /= trace_idx - idx_last_log
-                    eval_values = _div_dict(eval_values, (trace_idx - idx_last_log))
+                    eval_values = h.div_dict(eval_values, (trace_idx - idx_last_log))
 
                     # Log to tensorboard writer
                     if tb_writer is not None:
@@ -188,7 +149,7 @@ def train(
 
                     # Log to stdout
                     if verbose:
-                        _verbose_log(
+                        h.verbose_log(
                             loss_train_avg=loss_values["train"],
                             delta=delta,
                             idx_batch=idx_batch,
@@ -198,8 +159,8 @@ def train(
                         )
 
                     # Reset running loss and evaluation metrics
-                    loss_values = _zero_out_dict(loss_values)
-                    eval_values = _zero_out_dict(eval_values)
+                    loss_values = h.zero_out_dict(loss_values)
+                    eval_values = h.zero_out_dict(eval_values)
                     idx_last_log = trace_idx
                 #
             if bar_batch is not None:
@@ -215,7 +176,7 @@ def train(
         if bar_batch is not None:
             bar_batch.close()
         if bar_epoch is not None:
-            bar_epoch.set_postfix_str(f"Loss: {_fmt_loss(epoch_losses[-1])}")
+            bar_epoch.set_postfix_str(f"Loss: {h.fmt_loss(epoch_losses[-1])}")
             bar_epoch.update()
     # End of epoch loop
     if bar_epoch is not None:
