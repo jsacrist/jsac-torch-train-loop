@@ -16,6 +16,8 @@ __all__ = [  # External-facing members exported by this file
     "div_dict",
     "verbose_log",
     #
+    "parse_nonzero_positive_int",
+    "parse_transform_func",
     "parse_progress_level",
     "parse_progress",
     #
@@ -50,9 +52,21 @@ def verbose_log(*, loss_train_avg, delta, idx_batch, idx_epoch, num_epochs, n_to
     print(log_str)
 
 
+def parse_nonzero_positive_int(num: int):
+    assert isinstance(num, int)
+    assert num >= 1
+    return num
+
+
+def parse_transform_func(func):
+    if func is None:
+        return None
+    assert callable(func)
+    return func
+
+
 def parse_progress_level(progress_level: int):
-    assert isinstance(progress_level, int)
-    assert progress_level >= 1
+    progress_level = parse_nonzero_positive_int(progress_level)
     assert progress_level <= 3
     return progress_level
 
@@ -75,9 +89,9 @@ def init_loss_value_dict(validation_loader):
     return loss_values
 
 
-def init_eval_values_dict(eval_metrics, tb_writer):
+def init_eval_values_dict(eval_metrics, writer):
     eval_values = dict()
     if eval_metrics is not None:
-        assert tb_writer is not None, "'val_metrics' Requires 'tb_writer'"
+        assert writer is not None, "'val_metrics' Requires 'writer'"
         eval_values = {metric_name: 0.0 for (metric_name, _) in eval_metrics.items()}
     return eval_values

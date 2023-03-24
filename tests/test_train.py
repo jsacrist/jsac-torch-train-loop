@@ -125,8 +125,8 @@ def test_passes_minimal_params(
         optimizer=my_optimizer,
         data_loader=my_train_loader,
         #
-        feat_premodel_func=my_feat_preproc,
-        label_premodel_func=my_label_preproc,
+        feat_transform=my_feat_preproc,
+        label_transform=my_label_preproc,
         num_epochs=1,
     )
 
@@ -145,8 +145,8 @@ def test_invalid_model(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
         )
 
@@ -165,8 +165,8 @@ def test_invalid_criterion(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
         )
 
@@ -185,8 +185,8 @@ def test_invalid_optimizer(
             optimizer=None,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
         )
 
@@ -206,8 +206,8 @@ def test_invalid_progress_level_low(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
             #
             progress_level=0,
@@ -229,8 +229,8 @@ def test_invalid_progress_level_high(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
             #
             progress_level=4,
@@ -252,9 +252,140 @@ def test_invalid_progress_level_float(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
-            feat_premodel_func=my_feat_preproc,
-            label_premodel_func=my_label_preproc,
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
             num_epochs=1,
             #
             progress_level=1.618,
         )
+
+
+def test_invalid_log_freq_low(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            log_freq=0,
+        )
+
+
+def test_invalid_log_freq_lower(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            log_freq=-1,
+        )
+
+
+def test_invalid_log_freq_float(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            log_freq=3.14156,
+        )
+
+
+def test_invalid_num_epochs_low(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=0,
+        )
+
+
+def test_invalid_num_epochs_lower(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=-1,
+        )
+
+
+def test_invalid_num_epochs_float(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=3.14156,
+        )
+
+
+def test_invalid_val_metrics_no_writer():
+    # TODO
+    pass

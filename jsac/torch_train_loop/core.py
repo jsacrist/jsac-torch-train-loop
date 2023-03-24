@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Imports from standard libraries
 import datetime
-from typing import Union, Dict, List
-import re
+from typing import Union, Dict, List, Callable
 
 # Imports from 3rd party libraries
 import torch
@@ -25,17 +24,21 @@ def train(
     *,
     validation_loader: torch.utils.data.dataloader.DataLoader | None = None,
     eval_metrics: List[Dict[str, torch.nn.modules.loss._Loss]] | None = None,
-    tb_writer: writer.SummaryWriter | None = None,
+    writer: writer.SummaryWriter | None = None,
     log_freq: int = 100,
     device: str = "cpu",
     num_epochs: int = 10,
-    feat_premodel_func: Union[callable, None] = None,
-    label_premodel_func: Union[callable, None] = None,
+    feat_transform: Union[Callable, None] = None,
+    label_transform: Union[Callable, None] = None,
     progress: Union[bool, str, None] = None,
     progress_level: int = 2,
     verbose: bool = True,
 ):
     # Parse and validate parameters
+    log_freq = h.parse_nonzero_positive_int(log_freq)
+    num_epochs = h.parse_nonzero_positive_int(num_epochs)
+    feat_transform = h.parse_transform_func(feat_transform)
+    label_transform = h.parse_transform_func(label_transform)
     progress = h.parse_progress(progress)
     progress_level = h.parse_progress_level(progress_level)
 
@@ -47,7 +50,7 @@ def train(
 
     # Init dictionaries
     loss_values = h.init_loss_value_dict(validation_loader)
-    eval_values = h.init_eval_values_dict(eval_metrics, tb_writer)
+    eval_values = h.init_eval_values_dict(eval_metrics, writer)
 
     # Initialize variables
     n_batches = len(data_loader)
@@ -74,11 +77,11 @@ def train(
         )
         for idx_batch, (features, labels) in enumerate(data_loader):
             # Pre-process features and labels
-            if feat_premodel_func:
-                features = feat_premodel_func(features)
+            if feat_transform:
+                features = feat_transform(features)
             features = features.to(device)
-            if label_premodel_func:
-                labels = label_premodel_func(labels)
+            if label_transform:
+                labels = label_transform(labels)
             labels = labels.to(device)
 
             # Forward pass
@@ -101,6 +104,7 @@ def train(
                         eval_values[metric_name] += metric(outputs, labels).item()
 
                 # Log the loss value based on the "log frenquency"
+                # TODO: Refactor this section so as to decrease cyclomatic complexity
                 if (idx_batch + 1) % log_freq == 0 or idx_batch + 1 == n_batches:
                     trace_idx = idx_epoch * n_batches + idx_batch
 
@@ -115,11 +119,11 @@ def train(
                         )
                         for feat_validation, lbl_validation in validation_loader:
                             # Validation Pre-process features and labels
-                            if feat_premodel_func:
-                                feat_validation = feat_premodel_func(feat_validation)
+                            if feat_transform:
+                                feat_validation = feat_transform(feat_validation)
                             feat_validation = feat_validation.to(device)
-                            if label_premodel_func:
-                                lbl_validation = label_premodel_func(lbl_validation)
+                            if label_transform:
+                                lbl_validation = label_transform(lbl_validation)
                             lbl_validation = lbl_validation.to(device)
 
                             # Validation Forward pass
@@ -141,11 +145,11 @@ def train(
                     eval_values = h.div_dict(eval_values, (trace_idx - idx_last_log))
 
                     # Log to tensorboard writer
-                    if tb_writer is not None:
-                        tb_writer.add_scalars("loss", loss_values, trace_idx)
+                    if writer is not None:
+                        writer.add_scalars("loss", loss_values, trace_idx)
                         if eval_metrics is not None:
-                            tb_writer.add_scalars("metrics", eval_values, trace_idx)
-                        tb_writer.flush()
+                            writer.add_scalars("metrics", eval_values, trace_idx)
+                        writer.flush()
 
                     # Log to stdout
                     if verbose:
@@ -169,10 +173,10 @@ def train(
 
         # End of batch loop
         epoch_losses.append(batch_loss / n_batches)
-        if tb_writer is not None:
+        if writer is not None:
             trace_idx = idx_epoch * n_batches + idx_batch
-            tb_writer.add_scalars("loss", {"train_epoch": epoch_losses[-1]}, trace_idx)
-            tb_writer.flush()
+            writer.add_scalars("loss", {"train_epoch": epoch_losses[-1]}, trace_idx)
+            writer.flush()
         if bar_batch is not None:
             bar_batch.close()
         if bar_epoch is not None:
@@ -181,5 +185,5 @@ def train(
     # End of epoch loop
     if bar_epoch is not None:
         bar_epoch.close()
-    if tb_writer is not None:
-        tb_writer.close()
+    if writer is not None:
+        writer.close()
