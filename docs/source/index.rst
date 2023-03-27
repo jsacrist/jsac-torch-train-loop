@@ -6,15 +6,10 @@
 Welcome to torch_train_loop's documentation!
 ============================================
 
+Revision: |release|
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   torch_train_loop

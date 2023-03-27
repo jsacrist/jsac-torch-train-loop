@@ -40,9 +40,9 @@ setup(
     packages=packages,
     include_package_data=True,
     install_requires=["torch", "tqdm"],
-    entry_points={
-        # "console_scripts": []
-    },
+    # entry_points={
+    #     "console_scripts": []
+    # },
     zip_safe=False,
     python_requires=">=3.6",
 )

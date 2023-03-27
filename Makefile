@@ -14,7 +14,7 @@ test:
 	pytest
 
 docs:
-	cd docs; make html
+	cd docs; make clean html
 
 docs-server:
 	python3 -m http.server 8000 --directory=./docs/build/html/

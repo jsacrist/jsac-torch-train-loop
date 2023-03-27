@@ -44,6 +44,33 @@ def train(
     progress_level: int = 2,
     verbose: bool = True,
 ):
+    """_summary_
+
+    Args:
+        model (torch.nn.Module): A pytorch model.
+        criterion (torch.nn.modules.loss._Loss): _description_
+        optimizer (Optimizer): _description_
+        data_loader (torch.utils.data.dataloader.DataLoader):
+            _description_
+        validation_loader (torch.utils.data.dataloader.DataLoader | None, optional):
+            _description_. Defaults to None.
+        eval_metrics (List[Dict[str, torch.nn.modules.loss._Loss]] | None, optional):
+            _description_. Defaults to None.
+        writer (writer.SummaryWriter | None, optional):
+            _description_. Defaults to None.
+        log_freq (int, optional): _description_. Defaults to 100.
+        od_wait (Union[int, None], optional): _description_. Defaults to None.
+        device (str, optional): _description_. Defaults to "cpu".
+        num_epochs (int, optional): _description_. Defaults to 10.
+        feat_transform (Union[Callable, None], optional):
+            _description_. Defaults to None.
+        label_transform (Union[Callable, None], optional):
+            _description_. Defaults to None.
+        progress (Union[bool, str, None], optional):
+            _description_. Defaults to None.
+        progress_level (int, optional): _description_. Defaults to 2.
+        verbose (bool, optional): _description_. Defaults to True.
+    """
     # Parse and validate parameters
     log_freq = p.parse_nonzero_positive_int(log_freq)
     od_wait = p.parse_od_wait(od_wait, validation_loader)
