@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: clean, build, test
+.PHONY: clean, build, test, docs
 
 build:
 	python3 setup.py bdist_wheel
@@ -12,3 +12,9 @@ clean:
 
 test:
 	pytest
+
+docs:
+	cd docs; make html
+
+docs-server:
+	python3 -m http.server 8000 --directory=./docs/build/html/
