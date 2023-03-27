@@ -386,6 +386,124 @@ def test_invalid_num_epochs_float(
         )
 
 
-def test_invalid_val_metrics_no_writer():
-    # TODO
-    pass
+def test_invalid_eval_metrics_no_writer(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=1,
+            #
+            eval_metrics={
+                "mse": torch.nn.MSELoss(),
+                "xent": torch.nn.CrossEntropyLoss(),
+            },
+        )
+
+
+def test_invalid_od_wait_no_validation_loader(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=1,
+            #
+            od_wait=10,
+        )
+
+
+def test_invalid_od_wait_low(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+    my_test_loader,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=1,
+            #
+            od_wait=0,
+            validation_loader=my_test_loader,
+        )
+
+
+def test_invalid_od_wait_float(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+    my_test_loader,
+):
+    with pytest.raises(AssertionError):
+        train(
+            model=my_model,
+            criterion=my_criterion,
+            optimizer=my_optimizer,
+            data_loader=my_train_loader,
+            #
+            feat_transform=my_feat_preproc,
+            label_transform=my_label_preproc,
+            num_epochs=1,
+            #
+            od_wait=3.14159,
+            validation_loader=my_test_loader,
+        )
+
+
+def test_passes_od_wait(
+    my_model,
+    my_criterion,
+    my_optimizer,
+    my_train_loader,
+    my_feat_preproc,
+    my_label_preproc,
+    my_test_loader,
+):
+    train(
+        model=my_model,
+        criterion=my_criterion,
+        optimizer=my_optimizer,
+        data_loader=my_train_loader,
+        #
+        feat_transform=my_feat_preproc,
+        label_transform=my_label_preproc,
+        num_epochs=1,
+        #
+        od_wait=2,
+        validation_loader=my_test_loader,
+    )

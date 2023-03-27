@@ -11,6 +11,7 @@ from torch.utils.tensorboard import writer
 
 # Imports from this project
 from . import helpers as h
+from . import input_parsers as p
 
 __all__ = [  # External-facing members exported by this file
     "train",
@@ -44,17 +45,13 @@ def train(
     verbose: bool = True,
 ):
     # Parse and validate parameters
-    log_freq = h.parse_nonzero_positive_int(log_freq)
-    od_wait = h.parse_od_wait(od_wait)
-    num_epochs = h.parse_nonzero_positive_int(num_epochs)
-    feat_transform = h.parse_transform_func(feat_transform)
-    label_transform = h.parse_transform_func(label_transform)
-    progress = h.parse_progress(progress)
-    progress_level = h.parse_progress_level(progress_level)
-
-    #
-    if od_wait is not None:
-        assert validation_loader is not None
+    log_freq = p.parse_nonzero_positive_int(log_freq)
+    od_wait = p.parse_od_wait(od_wait, validation_loader)
+    num_epochs = p.parse_nonzero_positive_int(num_epochs)
+    feat_transform = p.parse_transform_func(feat_transform)
+    label_transform = p.parse_transform_func(label_transform)
+    progress = p.parse_progress(progress)
+    progress_level = p.parse_progress_level(progress_level)
 
     #
     if progress == "notebook":
@@ -63,8 +60,8 @@ def train(
         from tqdm import tqdm
 
     # Init dictionaries
-    loss_values = h.init_loss_value_dict(validation_loader)
-    eval_values = h.init_eval_values_dict(eval_metrics, writer)
+    loss_values = p.init_loss_value_dict(validation_loader)
+    eval_values = p.init_eval_values_dict(eval_metrics, writer)
 
     # Initialize variables
     n_batches = len(data_loader)
