@@ -29,9 +29,9 @@ setup(
     long_description_content_type="text/markdown",
     author="Jorge Sacristan",
     author_email="j.sacris@gmail.com",
-    url="https://github.com/jsacrist/jsac-soothsayer.git",
+    url="https://github.com/jsacrist/jsac-torch-train-loop.git",
     project_urls={
-        "Bug Tracker": "https://github.com/jsacrist/jsac-soothsayer/issues",
+        "Bug Tracker": "https://github.com/jsacrist/jsac-torch-train-loop/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -44,9 +44,7 @@ setup(
         "pandas",
     ],
     entry_points={
-        "console_scripts": [
-            f"soothsayer={NAMESPACE}.{PACKAGE}.cli:main",
-        ]
+        # "console_scripts": []
     },
     zip_safe=False,
     python_requires=">=3.6",

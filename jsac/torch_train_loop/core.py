@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Imports from standard libraries
 import datetime
+from dataclasses import dataclass
 from typing import Union, Dict, List, Callable
 
 # Imports from 3rd party libraries
@@ -16,6 +17,13 @@ __all__ = [  # External-facing members exported by this file
 ]
 
 
+@dataclass
+class ODCandidate:
+    idx: int
+    loss: float
+    hash: int
+
+
 def train(
     model: torch.nn.Module,
     criterion: torch.nn.modules.loss._Loss,
@@ -26,6 +34,7 @@ def train(
     eval_metrics: List[Dict[str, torch.nn.modules.loss._Loss]] | None = None,
     writer: writer.SummaryWriter | None = None,
     log_freq: int = 100,
+    od_wait: Union[int, None] = None,
     device: str = "cpu",
     num_epochs: int = 10,
     feat_transform: Union[Callable, None] = None,
@@ -36,6 +45,7 @@ def train(
 ):
     # Parse and validate parameters
     log_freq = h.parse_nonzero_positive_int(log_freq)
+    od_wait = h.parse_od_wait(od_wait)
     num_epochs = h.parse_nonzero_positive_int(num_epochs)
     feat_transform = h.parse_transform_func(feat_transform)
     label_transform = h.parse_transform_func(label_transform)
@@ -43,9 +53,13 @@ def train(
     progress_level = h.parse_progress_level(progress_level)
 
     #
+    if od_wait is not None:
+        assert validation_loader is not None
+
+    #
     if progress == "notebook":
         from tqdm.notebook import tqdm
-    else:  # "cli"
+    elif progress:  # "cli"
         from tqdm import tqdm
 
     # Init dictionaries
@@ -58,6 +72,7 @@ def train(
     start_time = datetime.datetime.now()
     epoch_losses = list()
     idx_last_log = -1
+    od_candidate = None
 
     # Main loop Start (epochs)
     bar_epoch = (
@@ -76,13 +91,16 @@ def train(
             else None
         )
         for idx_batch, (features, labels) in enumerate(data_loader):
+            # Get current step number
+            idx_step = idx_epoch * n_batches + idx_batch
+
             # Pre-process features and labels
+            features = features.to(device)
+            labels = labels.to(device)
             if feat_transform:
                 features = feat_transform(features)
-            features = features.to(device)
             if label_transform:
                 labels = label_transform(labels)
-            labels = labels.to(device)
 
             # Forward pass
             outputs = model(features)
@@ -98,16 +116,14 @@ def train(
             loss_values["train"] += loss.item()
 
             with torch.no_grad():
-                # Compute evaluation metrics on the training set
+                # On every step: Compute/accumulate all evaluation metrics on the training set
                 if eval_metrics is not None:
                     for metric_name, metric in eval_metrics.items():
                         eval_values[metric_name] += metric(outputs, labels).item()
 
-                # Log the loss value based on the "log frenquency"
+                # Depending on "log frequency": Log the loss value.
                 # TODO: Refactor this section so as to decrease cyclomatic complexity
                 if (idx_batch + 1) % log_freq == 0 or idx_batch + 1 == n_batches:
-                    trace_idx = idx_epoch * n_batches + idx_batch
-
                     # Compute validation loss on the whole validation set (if provided)
                     if validation_loader is not None:
                         _loss_validation = 0.0
@@ -119,12 +135,12 @@ def train(
                         )
                         for feat_validation, lbl_validation in validation_loader:
                             # Validation Pre-process features and labels
+                            feat_validation = feat_validation.to(device)
+                            lbl_validation = lbl_validation.to(device)
                             if feat_transform:
                                 feat_validation = feat_transform(feat_validation)
-                            feat_validation = feat_validation.to(device)
                             if label_transform:
                                 lbl_validation = label_transform(lbl_validation)
-                            lbl_validation = lbl_validation.to(device)
 
                             # Validation Forward pass
                             outputs_validation = model(feat_validation)
@@ -136,19 +152,44 @@ def train(
                         # Compute average validation loss on the whole validation set
                         loss_values["validation"] = _loss_validation / _len_val
 
+                        #
+                        if od_wait is not None:
+                            if od_candidate is None:
+                                # TODO: save to file
+                                od_candidate = ODCandidate(
+                                    idx=idx_step,
+                                    loss=loss_values["validation"],
+                                    hash=h.hash_state_dict(model.state_dict()),
+                                )
+                            elif od_wait >= idx_step - od_candidate.idx:
+                                if loss_values["validation"] <= od_candidate.loss:
+                                    # TODO: save to file
+                                    od_candidate = ODCandidate(
+                                        idx=idx_step,
+                                        loss=loss_values["validation"],
+                                        hash=h.hash_state_dict(model.state_dict()),
+                                    )
+                            else:
+                                print(
+                                    f"Overfit Detection at step {idx_step} with loss={h.fmt_loss(loss_values['validation'])} "
+                                    + f"Best model at step {od_candidate.idx} with loss={h.fmt_loss(od_candidate.loss)} ({hex(od_candidate.hash)})"
+                                )
+                                # TODO: Load from file
+                                break
+
                     # Figure out elapsed time, discard microseconds
                     delta = datetime.datetime.now() - start_time
                     delta -= datetime.timedelta(microseconds=delta.microseconds)
 
                     # Compute running AVERAGE loss and AVERAGE metrics
-                    loss_values["train"] /= trace_idx - idx_last_log
-                    eval_values = h.div_dict(eval_values, (trace_idx - idx_last_log))
+                    loss_values["train"] /= idx_step - idx_last_log
+                    eval_values = h.div_dict(eval_values, (idx_step - idx_last_log))
 
                     # Log to tensorboard writer
                     if writer is not None:
-                        writer.add_scalars("loss", loss_values, trace_idx)
+                        writer.add_scalars("loss", loss_values, idx_step)
                         if eval_metrics is not None:
-                            writer.add_scalars("metrics", eval_values, trace_idx)
+                            writer.add_scalars("metrics", eval_values, idx_step)
                         writer.flush()
 
                     # Log to stdout
@@ -165,23 +206,27 @@ def train(
                     # Reset running loss and evaluation metrics
                     loss_values = h.zero_out_dict(loss_values)
                     eval_values = h.zero_out_dict(eval_values)
-                    idx_last_log = trace_idx
+                    idx_last_log = idx_step
                 #
             if bar_batch is not None:
                 bar_batch.update()
             #
 
-        # End of batch loop
-        epoch_losses.append(batch_loss / n_batches)
-        if writer is not None:
-            trace_idx = idx_epoch * n_batches + idx_batch
-            writer.add_scalars("loss", {"train_epoch": epoch_losses[-1]}, trace_idx)
-            writer.flush()
-        if bar_batch is not None:
-            bar_batch.close()
-        if bar_epoch is not None:
-            bar_epoch.set_postfix_str(f"Loss: {h.fmt_loss(epoch_losses[-1])}")
-            bar_epoch.update()
+        else:
+            # End of batch loop (inner loop)
+            epoch_losses.append(batch_loss / n_batches)
+            if writer is not None:
+                writer.add_scalars("loss", {"train_epoch": epoch_losses[-1]}, idx_step)
+                writer.flush()
+            if bar_batch is not None:
+                bar_batch.close()
+            if bar_epoch is not None:
+                bar_epoch.set_postfix_str(f"Loss: {h.fmt_loss(epoch_losses[-1])}")
+                bar_epoch.update()
+            continue
+
+        # Only executed if the inner loop issues a "break statement"
+        break
     # End of epoch loop
     if bar_epoch is not None:
         bar_epoch.close()
