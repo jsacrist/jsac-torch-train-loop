@@ -125,9 +125,9 @@ def test_passes_minimal_params(
         optimizer=my_optimizer,
         data_loader=my_train_loader,
         #
+        num_epochs=1,
         feat_transform=my_feat_preproc,
         label_transform=my_label_preproc,
-        num_epochs=1,
     )
 
 
@@ -145,9 +145,9 @@ def test_invalid_model(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
         )
 
 
@@ -165,9 +165,9 @@ def test_invalid_criterion(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
         )
 
 
@@ -185,9 +185,9 @@ def test_invalid_optimizer(
             optimizer=None,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
         )
 
 
@@ -206,9 +206,9 @@ def test_invalid_progress_level_low(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             progress_level=0,
         )
@@ -229,9 +229,9 @@ def test_invalid_progress_level_high(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             progress_level=4,
         )
@@ -252,9 +252,9 @@ def test_invalid_progress_level_float(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             progress_level=1.618,
         )
@@ -277,6 +277,7 @@ def test_invalid_log_freq_low(
             #
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
+            #
             log_freq=0,
         )
 
@@ -338,9 +339,9 @@ def test_invalid_num_epochs_low(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=0,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=0,
         )
 
 
@@ -359,9 +360,9 @@ def test_invalid_num_epochs_lower(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=-1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=-1,
         )
 
 
@@ -380,9 +381,9 @@ def test_invalid_num_epochs_float(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=3.14156,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=3.14156,
         )
 
 
@@ -401,9 +402,9 @@ def test_invalid_eval_metrics_no_writer(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             eval_metrics={
                 "mse": torch.nn.MSELoss(),
@@ -427,9 +428,9 @@ def test_invalid_od_wait_no_validation_loader(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             od_wait=10,
         )
@@ -451,9 +452,9 @@ def test_invalid_od_wait_low(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             od_wait=0,
             validation_loader=my_test_loader,
@@ -476,9 +477,9 @@ def test_invalid_od_wait_float(
             optimizer=my_optimizer,
             data_loader=my_train_loader,
             #
+            num_epochs=1,
             feat_transform=my_feat_preproc,
             label_transform=my_label_preproc,
-            num_epochs=1,
             #
             od_wait=3.14159,
             validation_loader=my_test_loader,
@@ -500,9 +501,9 @@ def test_passes_od_wait(
         optimizer=my_optimizer,
         data_loader=my_train_loader,
         #
+        num_epochs=1,
         feat_transform=my_feat_preproc,
         label_transform=my_label_preproc,
-        num_epochs=1,
         #
         od_wait=2,
         validation_loader=my_test_loader,

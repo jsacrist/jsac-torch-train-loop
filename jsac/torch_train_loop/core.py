@@ -2,7 +2,7 @@
 # Imports from standard libraries
 import datetime
 from dataclasses import dataclass
-from typing import Union, Dict, List, Callable
+from typing import Callable, Dict
 
 # Imports from 3rd party libraries
 import torch
@@ -31,44 +31,99 @@ def train(
     optimizer: Optimizer,
     data_loader: torch.utils.data.dataloader.DataLoader,
     *,
-    validation_loader: torch.utils.data.dataloader.DataLoader | None = None,
-    eval_metrics: List[Dict[str, torch.nn.modules.loss._Loss]] | None = None,
-    writer: writer.SummaryWriter | None = None,
-    log_freq: int = 100,
-    od_wait: Union[int, None] = None,
-    device: str = "cpu",
     num_epochs: int = 10,
-    feat_transform: Union[Callable, None] = None,
-    label_transform: Union[Callable, None] = None,
-    progress: Union[bool, str, None] = None,
+    log_freq: int = 100,
+    #
+    writer: writer.SummaryWriter | None = None,
+    validation_loader: torch.utils.data.dataloader.DataLoader | None = None,
+    eval_metrics: Dict[str, torch.nn.modules.loss._Loss] | None = None,
+    #
+    od_wait: int | None = None,
+    #
+    progress: bool | str = False,
     progress_level: int = 2,
-    verbose: bool = True,
+    #
+    feat_transform: Callable | None = None,
+    label_transform: Callable | None = None,
+    device: str = "cpu",
+    verbose: bool = True,  # TODO: determine if this is redundant
 ):
-    """_summary_
+    """General-purpose train-loop for PyTorch models, with some extra conveniences.
+
+    This function aims at reducing the boilerplate code needed to train a
+    PyTorch model, while providing a few convenient features during train time:
+
+    - Integration with `TensorBoard`_ (via PyTorch's `SummaryWriter`_) for
+      plotting:
+
+        - **Training loss** (requires argument :attr:`writer`)
+        - **Validation loss** (requires arguments :attr:`writer` and
+          :attr:`validation_loader`)
+        - Additional optional metrics (requires arguments :attr:`writer`
+          and :attr:`eval_metrics`)
+
+    - Progress bar(s) (via `tqdm`_) for Jupyter Notebooks or CLI environments.
+    - `Early stopping`_ overfitting detection (requires arguments :attr:`od_wait` and
+      :attr:`validation_loader`)
+
+    .. _TensorBoard: https://github.com/tensorflow/tensorboard
+    .. _SummaryWriter: https://pytorch.org/docs/stable/tensorboard.html?highlight=summarywriter#torch.utils.tensorboard.writer.SummaryWriter
+    .. _tqdm: https://github.com/tqdm/tqdm
+    .. _Early stopping: https://en.wikipedia.org/wiki/Early_stopping
+    .. _DataLoader: https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
 
     Args:
-        model (torch.nn.Module): A pytorch model.
-        criterion (torch.nn.modules.loss._Loss): _description_
+        model (torch.nn.Module): A PyTorch model.
+        criterion (torch.nn.modules.loss._Loss): Objective function used to
+            train :attr:`model`.
         optimizer (Optimizer): _description_
         data_loader (torch.utils.data.dataloader.DataLoader):
-            _description_
-        validation_loader (torch.utils.data.dataloader.DataLoader | None, optional):
-            _description_. Defaults to None.
-        eval_metrics (List[Dict[str, torch.nn.modules.loss._Loss]] | None, optional):
-            _description_. Defaults to None.
+            `DataLoader`_ object used for updating parameters in the
+            :attr:`model` (training).
+        num_epochs (int, optional): Number of times to pass through all batches
+            from :attr:`data_loader` during training. Defaults to 10.
+        log_freq (int, optional): Number of consequtive batches (iterations)
+            from :attr:`data_loader` to use before sending plot-data to
+            :attr:`writer`. Defaults to 100.
         writer (writer.SummaryWriter | None, optional):
-            _description_. Defaults to None.
-        log_freq (int, optional): _description_. Defaults to 100.
-        od_wait (Union[int, None], optional): _description_. Defaults to None.
-        device (str, optional): _description_. Defaults to "cpu".
-        num_epochs (int, optional): _description_. Defaults to 10.
-        feat_transform (Union[Callable, None], optional):
-            _description_. Defaults to None.
-        label_transform (Union[Callable, None], optional):
-            _description_. Defaults to None.
-        progress (Union[bool, str, None], optional):
-            _description_. Defaults to None.
-        progress_level (int, optional): _description_. Defaults to 2.
+            A `SummaryWriter`_ object to wich plotting data is sent every
+            :attr:`log_freq` batches (iterations) . Defaults to None.
+        validation_loader (torch.utils.data.dataloader.DataLoader | None, optional):
+            `DataLoader`_ object used for out-of-sample validation (not
+            training). Defaults to None.
+        eval_metrics (Dict[str, torch.nn.modules.loss._Loss] | None, optional):
+            A dictionary containing loss-function objects to be used as
+            evaluation metrics on the training set (:attr:`data_loader`).
+            Keys in this dictionary should be strings by which the plotted
+            metrics will be named. Defaults to None.
+        od_wait (int | None, optional): Number of consequtive batches (iterations)
+            from :attr:`data_loader` to wait for an improvement in the
+            validation loss before stopping training to avoid overfitting.
+            If this parameter is not passed, no overfitting-detection mechanism
+            is engaged. Defaults to None.
+        progress (bool | str, optional):
+            Defines which version of progress bar `tqdm`_ to use.
+            If a string is provided, it must be one of ``notebook`` or ``cli``.
+            If the boolean `True` is provided, the ``notebook`` version of tqdm
+            will be used.  Defaults to False.
+        progress_level (int, optional): Number of progress-bars to display
+
+            - 1: Only show Epoch progress bar.
+            - 2: Show Epoch and Batch progress bars.
+            - 3: Show Epoch, Batch, and Validation set progress bars.
+
+            Defaults to 2.
+        feat_transform (Callable | None, optional): Transformation function to
+            be used on the features of each batch (iteration) coming from
+            :attr:`data_loader` (and from :attr:`validation_loader` if
+            provided). Defaults to None.
+        label_transform (Callable | None, optional): Transformation function to
+            be used on the labels of each batch (iteration) coming from
+            :attr:`data_loader` (and from :attr:`validation_loader` if
+            provided). Defaults to None.
+        device (str, optional): Device to which both the model and the
+            data-batches will be sent before computing gradients.
+            Defaults to "cpu".
         verbose (bool, optional): _description_. Defaults to True.
     """
     # Parse and validate parameters
@@ -146,8 +201,9 @@ def train(
                         eval_values[metric_name] += metric(outputs, labels).item()
 
                 # Depending on "log frequency": Log the loss value.
-                # TODO: Refactor this section so as to decrease cyclomatic complexity
-                if (idx_batch + 1) % log_freq == 0 or idx_batch + 1 == n_batches:
+                if (validation_loader is not None or writer is not None) and (
+                    (idx_batch + 1) % log_freq == 0 or idx_batch + 1 == n_batches
+                ):
                     # Compute validation loss on the whole validation set (if provided)
                     if validation_loader is not None:
                         _loss_validation = 0.0

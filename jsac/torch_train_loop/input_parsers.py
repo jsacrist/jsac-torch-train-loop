@@ -48,8 +48,8 @@ def parse_progress_level(progress_level: int):
     return progress_level
 
 
-def parse_progress(progress: Union[bool, str, None]):
-    if progress is None:
+def parse_progress(progress: bool | str):
+    if not progress:
         return False
     if progress is True:
         return "notebook"
