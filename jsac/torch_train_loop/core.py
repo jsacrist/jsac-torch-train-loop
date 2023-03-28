@@ -6,6 +6,7 @@ from typing import Callable, Dict
 
 # Imports from 3rd party libraries
 import torch
+from torch.utils.data.dataloader import DataLoader
 from torch.optim.optimizer import Optimizer
 from torch.utils.tensorboard import writer
 
@@ -29,13 +30,13 @@ def train(
     model: torch.nn.Module,
     criterion: torch.nn.modules.loss._Loss,
     optimizer: Optimizer,
-    data_loader: torch.utils.data.dataloader.DataLoader,
+    data_loader: DataLoader,
     *,
     num_epochs: int = 10,
     log_freq: int = 100,
     #
     writer: writer.SummaryWriter | None = None,
-    validation_loader: torch.utils.data.dataloader.DataLoader | None = None,
+    validation_loader: DataLoader | None = None,
     eval_metrics: Dict[str, torch.nn.modules.loss._Loss] | None = None,
     #
     od_wait: int | None = None,
@@ -71,13 +72,17 @@ def train(
     .. _tqdm: https://github.com/tqdm/tqdm
     .. _Early stopping: https://en.wikipedia.org/wiki/Early_stopping
     .. _DataLoader: https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
+    .. _Optimizer: https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer
+    .. _SGD: https://en.wikipedia.org/wiki/Stochastic_gradient_descent
+    .. _Adam: https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Adam
 
     Args:
         model (torch.nn.Module): A PyTorch model.
         criterion (torch.nn.modules.loss._Loss): Objective function used to
             train :attr:`model`.
-        optimizer (Optimizer): _description_
-        data_loader (torch.utils.data.dataloader.DataLoader):
+        optimizer (Optimizer): `Optimizer`_ object that provides an
+            optimization algorithm (e.g. `SGD`_ or `Adam`_).
+        data_loader (DataLoader):
             `DataLoader`_ object used for updating parameters in the
             :attr:`model` (training).
         num_epochs (int, optional): Number of times to pass through all batches
@@ -88,7 +93,7 @@ def train(
         writer (writer.SummaryWriter | None, optional):
             A `SummaryWriter`_ object to wich plotting data is sent every
             :attr:`log_freq` batches (iterations) . Defaults to None.
-        validation_loader (torch.utils.data.dataloader.DataLoader | None, optional):
+        validation_loader (DataLoader | None, optional):
             `DataLoader`_ object used for out-of-sample validation (not
             training). Defaults to None.
         eval_metrics (Dict[str, torch.nn.modules.loss._Loss] | None, optional):

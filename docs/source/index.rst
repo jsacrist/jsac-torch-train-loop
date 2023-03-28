@@ -13,3 +13,5 @@ Revision: |release|
    :caption: Contents:
 
    torch_train_loop
+
+   auto_examples/index

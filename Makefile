@@ -14,6 +14,7 @@ test:
 	pytest
 
 docs:
+	rm -rf docs/source/auto_examples/*
 	cd docs; make clean html
 
 docs-server:
