@@ -10,6 +10,7 @@ dist/
 
 # Datasets
 **/.cached/
+examples/data/
 
 # Generated doc
 docs/source/auto_examples/

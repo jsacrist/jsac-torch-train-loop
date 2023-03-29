@@ -256,7 +256,7 @@ def train(
                                     )
                             else:
                                 print(
-                                    f"Overfit Detection at step {idx_step} with loss={h.fmt_loss(loss_values['validation'])} "
+                                    f"Overfit Detection at step {idx_step} with loss={h.fmt_loss(loss_values['validation'])}\n"
                                     + f"Best model at step {od_candidate.idx} with loss={h.fmt_loss(od_candidate.loss)} ({hex(od_candidate.hash)})"
                                 )
                                 # TODO: Load from file

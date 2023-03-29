@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MNIST example
 ====================
@@ -12,6 +13,14 @@ import datetime
 import torch
 import torchvision
 from torch.utils.tensorboard import SummaryWriter
+
+# sphinx_gallery_start_ignore
+import os, sys, inspect
+
+CURDIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
+CODEDIR = os.path.realpath(os.path.join(CURDIR, "../"))
+sys.path.insert(0, CODEDIR)
+# sphinx_gallery_end_ignore
 from jsac.torch_train_loop import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,11 +38,13 @@ LOG_FREQ = 100
 ODWAIT = 400
 
 # %%
+
 # Writer
 writer_datetime = datetime.datetime.now().strftime("%Y-%m-%dT%H%M%S")
 writer = SummaryWriter(f"/tmp/runs/mnist/{writer_datetime}")
 
 # %%
+
 # Data objects
 train_dataset = torchvision.datasets.MNIST(
     root="./data",
@@ -60,6 +71,8 @@ test_loader = torch.utils.data.DataLoader(
 
 
 # %%
+
+
 # Neural Network definition
 class NeuralNet(torch.nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
@@ -78,6 +91,7 @@ class NeuralNet(torch.nn.Module):
 
 
 # %%
+
 # Create an instance of the model
 torch.manual_seed(204)
 model = NeuralNet(
@@ -92,6 +106,7 @@ optimizer = torch.optim.Adam(
 )
 
 # %%
+
 # Now for the good part, training
 train(
     model,
@@ -108,8 +123,6 @@ train(
     },
     #
     od_wait=ODWAIT,
-    progress="notebook",
-    progress_level=3,
     feat_transform=lambda x: x.reshape(-1, 1, 28 * 28),
     label_transform=lambda x: torch.zeros(x.shape[0], 10).scatter(1, x.unsqueeze(1), 1.0),
     device=device,
