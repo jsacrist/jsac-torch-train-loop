@@ -11,7 +11,8 @@ dist/
 # Datasets
 **/.cached/
 examples/data/
+examples/*.pt
 
 # Generated doc
 docs/source/auto_examples/
-# docs/source/gen_modules/
+docs/source/gen_modules/

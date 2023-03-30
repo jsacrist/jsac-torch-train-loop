@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Imports from standard libraries
+import os
 import re
 import struct
 
@@ -18,6 +19,9 @@ __all__ = [  # External-facing members exported by this file
     #
     "hash_tensor",
     "hash_state_dict",
+    #
+    "get_model_path",
+    "remove_checkpoint",
 ]
 
 
@@ -70,3 +74,13 @@ def hash_state_dict(sd):
         assert isinstance(k, str)
         hlist.append((hash(k), hash_tensor(v)))
     return hash(tuple(hlist)) & ((1 << BITSIZE) - 1)
+
+
+def get_model_path(checkpoint_dir, candidate):
+    return os.path.join(checkpoint_dir, f"checkpoint.{candidate.idx}.{hex(candidate.hash)}.pt")
+
+
+def remove_checkpoint(checkpoint_dir, candidate):
+    checkpoint_path = get_model_path(checkpoint_dir, candidate)
+    if os.path.exists(checkpoint_path):
+        os.remove(checkpoint_path)

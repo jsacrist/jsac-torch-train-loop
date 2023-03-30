@@ -40,6 +40,8 @@ def train(
     eval_metrics: Dict[str, torch.nn.modules.loss._Loss] | None = None,
     #
     od_wait: int | None = None,
+    checkpoint_dir: str = ".",
+    keep_checkpoints: bool = False,
     #
     progress: bool | str = False,
     progress_level: int = 2,
@@ -47,12 +49,13 @@ def train(
     feat_transform: Callable | None = None,
     label_transform: Callable | None = None,
     device: str = "cpu",
-    verbose: bool = True,  # TODO: determine if this is redundant
+    verbose: bool = True,
 ):
     """General-purpose train-loop for PyTorch models, with some extra conveniences.
 
     This function aims at reducing the boilerplate code needed to train a
-    PyTorch model, while providing a few convenient features during train time:
+    `PyTorch`_ model, while providing a few convenient features during train
+    time:
 
     - Integration with `TensorBoard`_ (via PyTorch's `SummaryWriter`_) for
       plotting:
@@ -66,15 +69,6 @@ def train(
     - Progress bar(s) (via `tqdm`_) for Jupyter Notebooks or CLI environments.
     - `Early stopping`_ overfitting detection (requires arguments :attr:`od_wait` and
       :attr:`validation_loader`)
-
-    .. _TensorBoard: https://github.com/tensorflow/tensorboard
-    .. _SummaryWriter: https://pytorch.org/docs/stable/tensorboard.html?highlight=summarywriter#torch.utils.tensorboard.writer.SummaryWriter
-    .. _tqdm: https://github.com/tqdm/tqdm
-    .. _Early stopping: https://en.wikipedia.org/wiki/Early_stopping
-    .. _DataLoader: https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
-    .. _Optimizer: https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer
-    .. _SGD: https://en.wikipedia.org/wiki/Stochastic_gradient_descent
-    .. _Adam: https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Adam
 
     Args:
         model (torch.nn.Module): A PyTorch model.
@@ -106,6 +100,12 @@ def train(
             validation loss before stopping training to avoid overfitting.
             If this parameter is not passed, no overfitting-detection mechanism
             is engaged. Defaults to None.
+        checkpoint_dir (str, optional): Directory in which to save checkpoint
+            weights and biases used for `Early stopping`_ overfitting
+            detection.  Defaults to ".".
+        keep_checkpoints (bool, optional):  Whether or not to keep the
+            checkpoints files (weight and biases) used for `Early stopping`_
+            overfitting detection.  Defaults to False.
         progress (bool | str, optional):
             Defines which version of progress bar `tqdm`_ to use.
             If a string is provided, it must be one of ``notebook`` or ``cli``.
@@ -130,6 +130,16 @@ def train(
             data-batches will be sent before computing gradients.
             Defaults to "cpu".
         verbose (bool, optional): _description_. Defaults to True.
+
+    .. _PyTorch: https://github.com/pytorch/pytorch
+    .. _TensorBoard: https://github.com/tensorflow/tensorboard
+    .. _SummaryWriter: https://pytorch.org/docs/stable/tensorboard.html?highlight=summarywriter#torch.utils.tensorboard.writer.SummaryWriter
+    .. _tqdm: https://github.com/tqdm/tqdm
+    .. _Early stopping: https://en.wikipedia.org/wiki/Early_stopping
+    .. _DataLoader: https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
+    .. _Optimizer: https://pytorch.org/docs/stable/optim.html#torch.optim.Optimizer
+    .. _SGD: https://en.wikipedia.org/wiki/Stochastic_gradient_descent
+    .. _Adam: https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Adam
     """
     # Parse and validate parameters
     log_freq = p.parse_nonzero_positive_int(log_freq)
@@ -240,26 +250,43 @@ def train(
                         #
                         if od_wait is not None:
                             if od_candidate is None:
-                                # TODO: save to file
+                                # Save first checkpoint
                                 od_candidate = ODCandidate(
                                     idx=idx_step,
                                     loss=loss_values["validation"],
                                     hash=h.hash_state_dict(model.state_dict()),
                                 )
+                                torch.save(
+                                    model.state_dict(),
+                                    h.get_model_path(checkpoint_dir, od_candidate),
+                                )
                             elif od_wait >= idx_step - od_candidate.idx:
                                 if loss_values["validation"] <= od_candidate.loss:
-                                    # TODO: save to file
+                                    # Remove previous checkpoint
+                                    if not keep_checkpoints:
+                                        h.remove_checkpoint(checkpoint_dir, od_candidate)
+                                    # Save checkpoint
                                     od_candidate = ODCandidate(
                                         idx=idx_step,
                                         loss=loss_values["validation"],
                                         hash=h.hash_state_dict(model.state_dict()),
                                     )
+                                    torch.save(
+                                        model.state_dict(),
+                                        h.get_model_path(checkpoint_dir, od_candidate),
+                                    )
                             else:
                                 print(
                                     f"Overfit Detection at step {idx_step} with loss={h.fmt_loss(loss_values['validation'])}\n"
-                                    + f"Best model at step {od_candidate.idx} with loss={h.fmt_loss(od_candidate.loss)} ({hex(od_candidate.hash)})"
+                                    + f"Loading best model from step {od_candidate.idx} with loss={h.fmt_loss(od_candidate.loss)} ({hex(od_candidate.hash)})"
                                 )
-                                # TODO: Load from file
+                                # Load model checkpoint
+                                model.load_state_dict(
+                                    torch.load(h.get_model_path(checkpoint_dir, od_candidate))
+                                )
+                                # Remove previous checkpoint
+                                if not keep_checkpoints:
+                                    h.remove_checkpoint(checkpoint_dir, od_candidate)
                                 break
 
                     # Figure out elapsed time, discard microseconds
@@ -317,3 +344,6 @@ def train(
         bar_epoch.close()
     if writer is not None:
         writer.close()
+    # Remove previous checkpoint
+    if od_wait is not None and not keep_checkpoints:
+        h.remove_checkpoint(checkpoint_dir, od_candidate)

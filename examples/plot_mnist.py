@@ -7,12 +7,17 @@ MNIST dataset.
 """
 
 # %%
+
 # Imports
 import datetime
 
 import torch
 import torchvision
 from torch.utils.tensorboard import SummaryWriter
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from tbparse import SummaryReader
 
 # sphinx_gallery_start_ignore
 import os, sys, inspect
@@ -26,6 +31,7 @@ from jsac.torch_train_loop import train
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # %%
+
 # Hyperparameters
 INPUT_SIZE = 28 * 28
 HIDDEN_SIZE = 500
@@ -52,7 +58,7 @@ train_dataset = torchvision.datasets.MNIST(
     transform=torchvision.transforms.ToTensor(),
     download=True,
 )
-test_dataset = torchvision.datasets.MNIST(
+validation_dataset = torchvision.datasets.MNIST(
     root="./data",
     train=False,
     transform=torchvision.transforms.ToTensor(),
@@ -63,8 +69,8 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=BATCH_SIZE,
     shuffle=True,
 )
-test_loader = torch.utils.data.DataLoader(
-    dataset=test_dataset,
+validation_loader = torch.utils.data.DataLoader(
+    dataset=validation_dataset,
     batch_size=1_000,
     shuffle=False,
 )
@@ -117,7 +123,7 @@ train(
     num_epochs=NUM_EPOCHS,
     log_freq=LOG_FREQ,
     writer=writer,
-    validation_loader=test_loader,
+    validation_loader=validation_loader,
     eval_metrics={
         "xent": torch.nn.CrossEntropyLoss(),
     },
@@ -128,3 +134,47 @@ train(
     device=device,
     verbose=False,
 )
+# While the model is training, you can run tensorboard to look at the plots in
+# real-time: `tensorboard --bind_all --logdir=/tmp/runs/mnist/`
+
+# %%
+
+# We can also plot the metrics directly on a notebook as well, the lowest
+# value of `loss_validation` coincides with the reported by the Early Stopping
+# mechanism in the previous cell
+traces = ["loss_train", "loss_validation", "loss_train_epoch"]
+df = pd.DataFrame()
+fig, ax = plt.subplots()
+for trace in traces:
+    reader = SummaryReader(writer.log_dir + "/" + trace, pivot=True, event_types={"scalars"})
+    trace_df = reader.scalars.set_index("step")
+    trace_df.rename(columns={"loss": trace}, inplace=True)
+    trace_df.plot(
+        ax=ax,
+        ylim=[0.04, 0.05],
+    )
+fig.show()
+
+
+# %%
+
+# Due to theEarly Stopping mechanism, the model with the best performance on the
+# validation set was loaded:
+model.eval()
+_loss_validation = 0
+
+feat_transform = lambda x: x.reshape(-1, 1, 28 * 28)
+label_transform = lambda x: torch.zeros(x.shape[0], 10).scatter(1, x.unsqueeze(1), 1.0)
+
+for feat_validation, lbl_validation in validation_loader:
+    feat_validation = feat_validation.to(device)
+    lbl_validation = lbl_validation.to(device)
+
+    feat_validation = feat_validation.reshape(-1, 1, 28 * 28)
+    lbl_validation = torch.zeros(lbl_validation.shape[0], 10).scatter(
+        1, lbl_validation.unsqueeze(1), 1.0
+    )
+
+    outputs_validation = model(feat_validation)
+    _loss_validation += criterion(outputs_validation, lbl_validation).item()
+print(_loss_validation / len(validation_loader))
