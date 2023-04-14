@@ -48,6 +48,7 @@ def train(
     #
     feat_transform: Callable | None = None,
     label_transform: Callable | None = None,
+    model_call_func: Callable | None = None,
     device: str = "cpu",
     verbose: bool = True,
 ):
@@ -126,10 +127,23 @@ def train(
             be used on the labels of each batch (iteration) coming from
             :attr:`data_loader` (and from :attr:`validation_loader` if
             provided). Defaults to None.
+        model_call_func (Callable | None, optional): Custom function to be used
+            to call the model.  This is useful in some cases where calling the
+            model requires more parameters than just the feature array, or
+            calling the model returns extra information (for example RNNs,
+            which require and return hidden states).  If provided, the function
+            signature should only accept `**kwargs` and return a dictionary
+            with at least one key called `"outputs"`.  e.g.:
+
+                >>> def model_caller(**kwargs):
+                >>>     return {"outputs": kwargs["model"](kwargs["features"])}
+
+            Defaults to None.
         device (str, optional): Device to which both the model and the
             data-batches will be sent before computing gradients.
             Defaults to "cpu".
-        verbose (bool, optional): _description_. Defaults to True.
+        verbose (bool, optional): Determines whether or not to print out the
+            progress status. Defaults to True.
 
     .. _PyTorch: https://github.com/pytorch/pytorch
     .. _TensorBoard: https://github.com/tensorflow/tensorboard
@@ -197,8 +211,12 @@ def train(
                 labels = label_transform(labels)
 
             # Forward pass
-            outputs = model(features)
-            loss = criterion(outputs, labels)
+            model_call_result = dict()
+            if model_call_func:
+                model_call_result = model_call_func(**locals())
+            else:
+                model_call_result["outputs"] = model(features)
+            loss = criterion(model_call_result["outputs"], labels)
 
             # ZBS: Zero-out gradients, Backprop pass, Step to update weights
             optimizer.zero_grad()
@@ -213,7 +231,9 @@ def train(
                 # On every step: Compute/accumulate all evaluation metrics on the training set
                 if eval_metrics is not None:
                     for metric_name, metric in eval_metrics.items():
-                        eval_values[metric_name] += metric(outputs, labels).item()
+                        eval_values[metric_name] += metric(
+                            model_call_result["outputs"], labels
+                        ).item()
 
                 # Depending on "log frequency": Log the loss value.
                 if (validation_loader is not None or writer is not None) and (
@@ -238,8 +258,16 @@ def train(
                                 lbl_validation = label_transform(lbl_validation)
 
                             # Validation Forward pass
-                            outputs_validation = model(feat_validation)
-                            _loss_validation += criterion(outputs_validation, lbl_validation).item()
+                            val_cal_result = dict()
+                            if model_call_func:
+                                val_locals = locals()
+                                val_locals["features"] = feat_validation
+                                val_cal_result = model_call_func(**val_locals)
+                            else:
+                                val_cal_result["outputs"] = model(feat_validation)
+                            _loss_validation += criterion(
+                                val_cal_result["outputs"], lbl_validation
+                            ).item()
                             if bar_val is not None:
                                 bar_val.update()
                         if bar_val is not None:

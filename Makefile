@@ -1,7 +1,10 @@
 .ONESHELL:
-.PHONY: clean, build, test, docs
+.PHONY: build, build-wheel, clean, test, docs, docs-server
 
 build:
+	python3 setup.py sdist
+
+build-wheel:
 	python3 setup.py bdist_wheel
 
 clean:
