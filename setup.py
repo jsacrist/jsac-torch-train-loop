@@ -18,7 +18,7 @@ def get_version_and_cmdclass(package_name):
 
 version, cmdclass = get_version_and_cmdclass(f"{NAMESPACE}/{PACKAGE}")
 packages = [f"{NAMESPACE}.{PACKAGE}"]
-print(f"Installing {packages} version {version}.")
+print(f"Running setup.py for {packages} version [{version}]")
 
 setup(
     name=f"{NAMESPACE}_{PACKAGE}",
@@ -30,19 +30,10 @@ setup(
     author="Jorge Sacristan",
     author_email="j.sacris@gmail.com",
     url="https://github.com/jsacrist/jsac-torch-train-loop.git",
-    project_urls={
-        "Bug Tracker": "https://github.com/jsacrist/jsac-torch-train-loop/issues",
-    },
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Operating System :: OS Independent",
-    ],
     packages=packages,
     include_package_data=True,
-    install_requires=["torch", "tqdm"],
     # entry_points={
     #     "console_scripts": []
     # },
     zip_safe=False,
-    python_requires=">=3.6",
 )

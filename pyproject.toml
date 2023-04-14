@@ -1,0 +1,17 @@
+[build-system]
+requires = ["torch", "torchvision", "tqdm", "pandas", "matplotlib"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "torch_train_loop"
+authors = [{name = "Jorge Sacristan", email = "j.sacris@gmail.com"}]
+dynamic = ["version", "description"]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = ['torch', 'tqdm']
+
+[project.urls]
+bug-tracker = "https://github.com/jsacrist/jsac-torch-train-loop/issues"

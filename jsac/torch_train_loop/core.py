@@ -142,7 +142,8 @@ def train(
         device (str, optional): Device to which both the model and the
             data-batches will be sent before computing gradients.
             Defaults to "cpu".
-        verbose (bool, optional): _description_. Defaults to True.
+        verbose (bool, optional): Determines whether or not to print out the
+            progress status. Defaults to True.
 
     .. _PyTorch: https://github.com/pytorch/pytorch
     .. _TensorBoard: https://github.com/tensorflow/tensorboard
