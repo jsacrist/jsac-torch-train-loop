@@ -22,6 +22,9 @@ print(f"Running setup.py for {packages} version [{version}]")
 
 setup(
     name=f"{NAMESPACE}_{PACKAGE}",
+    namespace_packages=[
+        NAMESPACE,
+    ],
     version=version,
     cmdclass=cmdclass,
     # author="Jorge Sacristan",

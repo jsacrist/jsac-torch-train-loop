@@ -8,16 +8,13 @@ name = "torch_train_loop"
 authors = [{name = "Jorge Sacristan", email = "j.sacris@gmail.com"}]
 license = {file = "LICENSE.txt", content-type = "text/plain"}
 description = "general-purpose train-loop for PyTorch models"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
-
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
-dependencies = ["torch >= 1.0", "tqdm >= 4.64"]
+dependencies = ["torch", "tqdm", "tensorboard"]
 dynamic = ["version", "readme"]
 
 
