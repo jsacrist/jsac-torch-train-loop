@@ -22,18 +22,9 @@ print(f"Running setup.py for {packages} version [{version}]")
 
 setup(
     name=f"{NAMESPACE}_{PACKAGE}",
-    namespace_packages=[
-        NAMESPACE,
-    ],
     version=version,
     cmdclass=cmdclass,
-    # author="Jorge Sacristan",
-    # author_email="j.sacris@gmail.com",
-    # url="https://github.com/jsacrist/jsac-torch-train-loop.git",
     packages=packages,
     include_package_data=True,
-    # entry_points={
-    #     "console_scripts": []
-    # },
     zip_safe=False,
 )
