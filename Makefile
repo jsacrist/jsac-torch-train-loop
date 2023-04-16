@@ -22,3 +22,7 @@ docs:
 
 docs-server:
 	python3 -m http.server 8000 --directory=./docs/build/html/
+
+release-test: clean build
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	

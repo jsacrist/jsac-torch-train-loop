@@ -10,7 +10,11 @@ license = {file = "LICENSE.txt", content-type = "text/plain"}
 description = "general-purpose train-loop for PyTorch models"
 requires-python = ">=3.8"
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
 dependencies = ['torch', 'tqdm']
