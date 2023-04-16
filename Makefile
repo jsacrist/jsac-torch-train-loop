@@ -1,7 +1,7 @@
 .ONESHELL:
-.PHONY: build, build-wheel, clean, test, docs, docs-server
+.PHONY: build-src, build-wheel, clean, test, docs, docs-server
 
-build:
+build-src:
 	python3 setup.py sdist
 
 build-wheel:
@@ -23,7 +23,7 @@ docs:
 docs-server:
 	python3 -m http.server 8000 --directory=./docs/build/html/
 
-release-test: clean build
+release-test: clean build-wheel
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 	echo ">>> pip3 install torch-train-loop --extra-index-url=https://test.pypi.org/simple/"
 	

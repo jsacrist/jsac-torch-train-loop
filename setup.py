@@ -24,7 +24,4 @@ setup(
     name=f"{NAMESPACE}_{PACKAGE}",
     version=version,
     cmdclass=cmdclass,
-    packages=packages,
-    include_package_data=True,
-    zip_safe=False,
 )
