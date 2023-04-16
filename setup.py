@@ -3,6 +3,7 @@ from setuptools import setup
 
 NAMESPACE = "jsac"
 PACKAGE = "torch_train_loop"
+pkg = f"{NAMESPACE}/{PACKAGE}"
 
 
 # Loads _version.py module without importing the whole package.
@@ -13,15 +14,13 @@ def get_version_and_cmdclass(package_name):
     spec = spec_from_file_location("version", os.path.join(package_name, "_version.py"))
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.__version__, module.get_cmdclass(f"{NAMESPACE}/{PACKAGE}")
+    return module.__version__, module.get_cmdclass(pkg)
 
 
-version, cmdclass = get_version_and_cmdclass(f"{NAMESPACE}/{PACKAGE}")
-packages = [f"{NAMESPACE}.{PACKAGE}"]
-print(f"Running setup.py for {packages} version [{version}]")
+version, cmdclass = get_version_and_cmdclass(pkg)
+print(f"Running setup.py for {pkg} version [{version}]")
 
 setup(
-    name=f"{NAMESPACE}_{PACKAGE}",
     version=version,
     cmdclass=cmdclass,
 )
