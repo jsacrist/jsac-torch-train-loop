@@ -1,5 +1,5 @@
 [build-system]
-requires = ["torch", "torchvision", "tqdm", "pandas", "matplotlib"]
+requires = ["torch", "torchvision", "tqdm", "tensorboard", "pandas", "matplotlib"]
 build-backend = "setuptools.build_meta"
 
 
