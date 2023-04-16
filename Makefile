@@ -25,4 +25,5 @@ docs-server:
 
 release-test: clean build
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	echo ">>> pip3 install torch-train-loop --extra-index-url=https://test.pypi.org/simple/"
 	

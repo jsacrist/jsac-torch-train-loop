@@ -1,6 +1,6 @@
 [build-system]
 requires = ["torch", "torchvision", "tqdm", "pandas", "matplotlib"]
-build-backend = "flit_core.buildapi"
+build-backend = "setuptools.build_meta"
 
 
 [project]
