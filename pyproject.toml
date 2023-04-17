@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+
+[project]
+name = "torch_train_loop"
+authors = [{name = "Jorge Sacristan", email = "j.sacris@gmail.com"}]
+license = {file = "LICENSE.txt", content-type = "text/plain"}
+description = "general-purpose train-loop for PyTorch models"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
+]
+dependencies = ["torch", "tqdm", "tensorboard"]
+dynamic = ["version", "readme"]
+
+
+[project.urls]
+bug-tracker = "https://github.com/jsacrist/jsac-torch-train-loop/issues"
+
+
+[tool.setuptools.dynamic]
+version = {attr = "jsac.torch_train_loop.__version__"}
+readme = {file = "README.md", content-type = "text/markdown"}

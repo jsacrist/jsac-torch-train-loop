@@ -1,7 +1,10 @@
 .ONESHELL:
-.PHONY: clean, build
+.PHONY: build-src, build-wheel, clean, test, docs, docs-server
 
-build:
+build-src:
+	python3 setup.py sdist
+
+build-wheel:
 	python3 setup.py bdist_wheel
 
 clean:
@@ -9,3 +12,18 @@ clean:
 	rm -rf dist/
 	find . -iname "__pycache__" -exec rm -rv {} +
 	find . -iname "*.egg-info" -exec rm -rv {} +
+
+test:
+	pytest
+
+docs:
+	rm -rf docs/source/auto_examples/*
+	cd docs; make clean html
+
+docs-server:
+	python3 -m http.server 8000 --directory=./docs/build/html/
+
+release-test: clean build-wheel
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	echo ">>> pip3 install torch-train-loop --extra-index-url=https://test.pypi.org/simple/"
+	

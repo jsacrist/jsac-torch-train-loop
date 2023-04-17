@@ -3,6 +3,7 @@ from setuptools import setup
 
 NAMESPACE = "jsac"
 PACKAGE = "torch_train_loop"
+pkg = f"{NAMESPACE}/{PACKAGE}"
 
 
 # Loads _version.py module without importing the whole package.
@@ -13,41 +14,13 @@ def get_version_and_cmdclass(package_name):
     spec = spec_from_file_location("version", os.path.join(package_name, "_version.py"))
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.__version__, module.get_cmdclass(NAMESPACE)
+    return module.__version__, module.get_cmdclass(pkg)
 
 
-version, cmdclass = get_version_and_cmdclass(f"{NAMESPACE}/{PACKAGE}")
-packages = [f"{NAMESPACE}.{PACKAGE}"]
-print(f"Installing {packages} version {version}.")
+version, cmdclass = get_version_and_cmdclass(pkg)
+print(f"Running setup.py for {pkg} version [{version}]")
 
 setup(
-    name=f"{NAMESPACE}_{PACKAGE}",
     version=version,
     cmdclass=cmdclass,
-    description="",
-    long_description="",
-    long_description_content_type="text/markdown",
-    author="Jorge Sacristan",
-    author_email="j.sacris@gmail.com",
-    url="https://github.com/jsacrist/jsac-soothsayer.git",
-    project_urls={
-        "Bug Tracker": "https://github.com/jsacrist/jsac-soothsayer/issues",
-    },
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Operating System :: OS Independent",
-    ],
-    packages=packages,
-    include_package_data=True,
-    install_requires=[
-        "numpy",
-        "pandas",
-    ],
-    entry_points={
-        "console_scripts": [
-            f"soothsayer={NAMESPACE}.{PACKAGE}.cli:main",
-        ]
-    },
-    zip_safe=False,
-    python_requires=">=3.6",
 )

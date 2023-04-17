@@ -156,7 +156,8 @@ def _write_version(fname):
         pass
     with open(fname, "w") as f:
         f.write(
-            "# This file has been created by setup.py.\n" "version = '{}'\n".format(__version__)
+            "# This file has been created by setup.py.\n"
+            "version = '{}'\n".format(__version__)
         )
 
 
@@ -171,14 +172,20 @@ def get_cmdclass(pkg_source_path):
             src_marker = "".join(["src", os.path.sep])
 
             if pkg_source_path.startswith(src_marker):
-                path = pkg_source_path[len(src_marker) :]
+                path = pkg_source_path[len(src_marker):]
             else:
                 path = pkg_source_path
-            _write_version(os.path.join(self.build_lib, path, STATIC_VERSION_FILE))
+            _write_version(
+                os.path.join(
+                    self.build_lib, path, STATIC_VERSION_FILE
+                )
+            )
 
     class _sdist(sdist_orig):
         def make_release_tree(self, base_dir, files):
             super().make_release_tree(base_dir, files)
-            _write_version(os.path.join(base_dir, pkg_source_path, STATIC_VERSION_FILE))
+            _write_version(
+                os.path.join(base_dir, pkg_source_path, STATIC_VERSION_FILE)
+            )
 
     return dict(sdist=_sdist, build_py=_build_py)
