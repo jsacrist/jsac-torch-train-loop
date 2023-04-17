@@ -13,7 +13,7 @@ import torchvision
 CURDIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 CODEDIR = os.path.realpath(os.path.join(CURDIR, "../"))
 sys.path.insert(0, CODEDIR)
-from jsac.torch_train_loop import train
+from jsac.torch_train_loop.core import train
 
 
 #
