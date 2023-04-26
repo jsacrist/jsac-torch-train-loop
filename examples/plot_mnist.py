@@ -20,13 +20,15 @@ import matplotlib.pyplot as plt
 from tbparse import SummaryReader
 
 # sphinx_gallery_start_ignore
-import os, sys, inspect
+import os
+import sys
+import inspect
 
 CURDIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 CODEDIR = os.path.realpath(os.path.join(CURDIR, "../"))
 sys.path.insert(0, CODEDIR)
 # sphinx_gallery_end_ignore
-from jsac.torch_train_loop import train
+from jsac.torch_train_loop.core import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -130,7 +132,9 @@ train(
     #
     od_wait=ODWAIT,
     feat_transform=lambda x: x.reshape(-1, 1, 28 * 28),
-    label_transform=lambda x: torch.zeros(x.shape[0], 10).scatter(1, x.unsqueeze(1), 1.0),
+    label_transform=lambda x: torch.zeros(x.shape[0], 10).scatter(
+        1, x.unsqueeze(1), 1.0
+    ),
     device=device,
     verbose=False,
 )
@@ -146,7 +150,9 @@ traces = ["loss_train", "loss_validation", "loss_train_epoch"]
 df = pd.DataFrame()
 fig, ax = plt.subplots()
 for trace in traces:
-    reader = SummaryReader(writer.log_dir + "/" + trace, pivot=True, event_types={"scalars"})
+    reader = SummaryReader(
+        writer.log_dir + "/" + trace, pivot=True, event_types={"scalars"}
+    )
     trace_df = reader.scalars.set_index("step")
     trace_df.rename(columns={"loss": trace}, inplace=True)
     trace_df.plot(
@@ -164,7 +170,9 @@ model.eval()
 _loss_validation = 0
 
 feat_transform = lambda x: x.reshape(-1, 1, 28 * 28)
-label_transform = lambda x: torch.zeros(x.shape[0], 10).scatter(1, x.unsqueeze(1), 1.0)
+label_transform = lambda x: torch.zeros(x.shape[0], 10).scatter(
+    1, x.unsqueeze(1), 1.0
+)
 
 for feat_validation, lbl_validation in validation_loader:
     feat_validation = feat_validation.to(device)

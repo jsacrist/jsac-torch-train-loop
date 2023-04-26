@@ -16,7 +16,7 @@ clean:
 test:
 	pytest
 
-docs:
+docs-html:
 	rm -rf docs/source/auto_examples/*
 	cd docs; make clean html
 
@@ -24,6 +24,8 @@ docs-server:
 	python3 -m http.server 8000 --directory=./docs/build/html/
 
 release-test: clean build-wheel
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*.whl
+	echo "After uploading a release to the TEST repository, you can try installing your"
+	echo "package by running the following command:"
 	echo ">>> pip3 install torch-train-loop --extra-index-url=https://test.pypi.org/simple/"
 	

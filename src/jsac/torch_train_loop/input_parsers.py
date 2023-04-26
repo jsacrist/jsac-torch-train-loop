@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Imports from standard libraries
-from typing import Union
+# ...
 
 # Imports from 3rd party libraries
 # ...
@@ -55,7 +55,9 @@ def parse_progress(progress: bool | str):
         return "notebook"
     assert isinstance(progress, str)
     _supported = ["notebook", "cli"]
-    assert progress in _supported, f"unsuported {progress}.  Provide one of {_supported}"
+    assert (
+        progress in _supported
+    ), f"unsuported {progress}.  Provide one of {_supported}"
     return progress
 
 
@@ -67,8 +69,10 @@ def init_loss_value_dict(validation_loader):
 
 
 def init_eval_values_dict(eval_metrics, writer):
-    eval_values = dict()
+    eval_values = {}
     if eval_metrics is not None:
         assert writer is not None, "'eval_metrics' Requires 'writer'"
-        eval_values = {metric_name: 0.0 for (metric_name, _) in eval_metrics.items()}
+        eval_values = {
+            metric_name: 0.0 for (metric_name, _) in eval_metrics.items()
+        }
     return eval_values

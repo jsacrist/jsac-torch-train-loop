@@ -8,7 +8,7 @@ from typing import Callable, Dict
 import torch
 from torch.utils.data.dataloader import DataLoader
 from torch.optim.optimizer import Optimizer
-from torch.utils.tensorboard import writer
+from torch.utils.tensorboard import writer as tb_writer
 
 # Imports from this project
 from . import helpers as h
@@ -35,7 +35,7 @@ def train(
     num_epochs: int = 10,
     log_freq: int = 100,
     #
-    writer: writer.SummaryWriter | None = None,
+    writer: tb_writer.SummaryWriter | None = None,
     validation_loader: DataLoader | None = None,
     eval_metrics: Dict[str, torch.nn.modules.loss._Loss] | None = None,
     #
@@ -85,7 +85,7 @@ def train(
         log_freq (int, optional): Number of consequtive batches (iterations)
             from :attr:`data_loader` to use before sending plot-data to
             :attr:`writer`. Defaults to 100.
-        writer (writer.SummaryWriter | None, optional):
+        writer (tb_writer.SummaryWriter | None, optional):
             A `SummaryWriter`_ object to wich plotting data is sent every
             :attr:`log_freq` batches (iterations) . Defaults to None.
         validation_loader (DataLoader | None, optional):
@@ -178,13 +178,15 @@ def train(
     n_batches = len(data_loader)
     model.to(device=device)
     start_time = datetime.datetime.now()
-    epoch_losses = list()
+    epoch_losses = []
     idx_last_log = -1
     od_candidate = None
 
     # Main loop Start (epochs)
     bar_epoch = (
-        tqdm(total=num_epochs, desc="Epoch", leave=True, dynamic_ncols=True) if progress else None
+        tqdm(total=num_epochs, desc="Epoch", leave=True, dynamic_ncols=True)
+        if progress
+        else None
     )
     for idx_epoch in range(num_epochs):
         # Zero-out losses
@@ -211,7 +213,7 @@ def train(
                 labels = label_transform(labels)
 
             # Forward pass
-            model_call_result = dict()
+            model_call_result = {}
             if model_call_func:
                 model_call_result = model_call_func(**locals())
             else:
@@ -237,34 +239,47 @@ def train(
 
                 # Depending on "log frequency": Log the loss value.
                 if (validation_loader is not None or writer is not None) and (
-                    (idx_batch + 1) % log_freq == 0 or idx_batch + 1 == n_batches
+                    (idx_batch + 1) % log_freq == 0
+                    or idx_batch + 1 == n_batches
                 ):
                     # Compute validation loss on the whole validation set (if provided)
                     if validation_loader is not None:
                         _loss_validation = 0.0
                         _len_val = len(validation_loader)
                         bar_val = (
-                            tqdm(total=_len_val, desc="Validation", leave=False, dynamic_ncols=True)
+                            tqdm(
+                                total=_len_val,
+                                desc="Validation",
+                                leave=False,
+                                dynamic_ncols=True,
+                            )
                             if progress and progress_level >= 3
                             else None
                         )
-                        for feat_validation, lbl_validation in validation_loader:
+                        for (
+                            feat_validation,
+                            lbl_validation,
+                        ) in validation_loader:
                             # Validation Pre-process features and labels
                             feat_validation = feat_validation.to(device)
                             lbl_validation = lbl_validation.to(device)
                             if feat_transform:
-                                feat_validation = feat_transform(feat_validation)
+                                feat_validation = feat_transform(
+                                    feat_validation
+                                )
                             if label_transform:
                                 lbl_validation = label_transform(lbl_validation)
 
                             # Validation Forward pass
-                            val_cal_result = dict()
+                            val_cal_result = {}
                             if model_call_func:
                                 val_locals = locals()
                                 val_locals["features"] = feat_validation
                                 val_cal_result = model_call_func(**val_locals)
                             else:
-                                val_cal_result["outputs"] = model(feat_validation)
+                                val_cal_result["outputs"] = model(
+                                    feat_validation
+                                )
                             _loss_validation += criterion(
                                 val_cal_result["outputs"], lbl_validation
                             ).item()
@@ -286,22 +301,33 @@ def train(
                                 )
                                 torch.save(
                                     model.state_dict(),
-                                    h.get_model_path(checkpoint_dir, od_candidate),
+                                    h.get_model_path(
+                                        checkpoint_dir, od_candidate
+                                    ),
                                 )
                             elif od_wait >= idx_step - od_candidate.idx:
-                                if loss_values["validation"] <= od_candidate.loss:
+                                if (
+                                    loss_values["validation"]
+                                    <= od_candidate.loss
+                                ):
                                     # Remove previous checkpoint
                                     if not keep_checkpoints:
-                                        h.remove_checkpoint(checkpoint_dir, od_candidate)
+                                        h.remove_checkpoint(
+                                            checkpoint_dir, od_candidate
+                                        )
                                     # Save checkpoint
                                     od_candidate = ODCandidate(
                                         idx=idx_step,
                                         loss=loss_values["validation"],
-                                        hash=h.hash_state_dict(model.state_dict()),
+                                        hash=h.hash_state_dict(
+                                            model.state_dict()
+                                        ),
                                     )
                                     torch.save(
                                         model.state_dict(),
-                                        h.get_model_path(checkpoint_dir, od_candidate),
+                                        h.get_model_path(
+                                            checkpoint_dir, od_candidate
+                                        ),
                                     )
                             else:
                                 print(
@@ -310,11 +336,17 @@ def train(
                                 )
                                 # Load model checkpoint
                                 model.load_state_dict(
-                                    torch.load(h.get_model_path(checkpoint_dir, od_candidate))
+                                    torch.load(
+                                        h.get_model_path(
+                                            checkpoint_dir, od_candidate
+                                        )
+                                    )
                                 )
                                 # Remove previous checkpoint
                                 if not keep_checkpoints:
-                                    h.remove_checkpoint(checkpoint_dir, od_candidate)
+                                    h.remove_checkpoint(
+                                        checkpoint_dir, od_candidate
+                                    )
                                 break
 
                     # Figure out elapsed time, discard microseconds
@@ -323,7 +355,9 @@ def train(
 
                     # Compute running AVERAGE loss and AVERAGE metrics
                     loss_values["train"] /= idx_step - idx_last_log
-                    eval_values = h.div_dict(eval_values, (idx_step - idx_last_log))
+                    eval_values = h.div_dict(
+                        eval_values, (idx_step - idx_last_log)
+                    )
 
                     # Log to tensorboard writer
                     if writer is not None:
@@ -356,12 +390,16 @@ def train(
             # End of batch loop (inner loop)
             epoch_losses.append(batch_loss / n_batches)
             if writer is not None:
-                writer.add_scalars("loss", {"train_epoch": epoch_losses[-1]}, idx_step)
+                writer.add_scalars(
+                    "loss", {"train_epoch": epoch_losses[-1]}, idx_step
+                )
                 writer.flush()
             if bar_batch is not None:
                 bar_batch.close()
             if bar_epoch is not None:
-                bar_epoch.set_postfix_str(f"Loss: {h.fmt_loss(epoch_losses[-1])}")
+                bar_epoch.set_postfix_str(
+                    f"Loss: {h.fmt_loss(epoch_losses[-1])}"
+                )
                 bar_epoch.update()
             continue
 

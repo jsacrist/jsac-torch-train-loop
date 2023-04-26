@@ -1,1 +1,1 @@
-./jsac/torch_train_loop/_static_version.py export-subst
+./src/jsac/torch_train_loop/_static_version.py export-subst
